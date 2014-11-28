@@ -37,7 +37,7 @@ int nb_threads=1;
 /* affichage SVG */
 bool affiche_sol= false;
 
-
+// (Alex) Ajout d'une structure pour passer en parametres les arguments de tsp_thread
 struct tsp_args{
 	int hops;
 	int len;
@@ -47,7 +47,7 @@ struct tsp_args{
 	int *sol_len;
 };
 
-
+// (Alex) Thread qui appelle tsp.
 static void* tsp_thread(void* params)
 {
 	struct tsp_args *args = (struct tsp_args*) params;
@@ -143,18 +143,9 @@ int main (int argc, char **argv)
     while (!empty_queue (&q)) {
 	int hops = 0, len = 0;
         get_job (&q, solution, &hops, &len);
-	
+	// (Alex) Ajout de threads ici :
 	if(threads_created < nb_threads){
 		struct tsp_args args = (struct tsp_args) {hops, len, {(int)solution}, &cuts, {(int)sol}, &sol_len };
-		/*
-struct tsp_args args;
-		args.hops = hops;
-		args.len = len;
-		args.path = &solution;
-		args.cuts = &cuts;
-		args.sol = &sol;
-		args.sol_len = &sol_len;
-		*/
 		err_create = pthread_create(&threads[threads_created++], NULL, 
 					    tsp_thread, (void *)&args);
 		if (err_create){

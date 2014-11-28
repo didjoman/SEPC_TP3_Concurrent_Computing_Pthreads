@@ -8,6 +8,7 @@
 #include <complex.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "tsp-types.h"
 #include "tsp-job.h"
@@ -36,6 +37,25 @@ int nb_threads=1;
 /* affichage SVG */
 bool affiche_sol= false;
 
+
+struct tsp_args{
+	int hops;
+	int len;
+	tsp_path_t path;
+	long long int *cuts;
+	tsp_path_t sol;
+	int *sol_len;
+};
+
+
+static void* tsp_thread(void* params)
+{
+	struct tsp_args *args = (struct tsp_args*) params;
+	tsp(args->hops, args->len, args->path, args->cuts, args->sol, args->sol_len);
+	pthread_exit(NULL);	
+	return NULL;
+	
+}
 
 static void generate_tsp_jobs (struct tsp_queue *q, int hops, int len, tsp_path_t path, long long int *cuts, tsp_path_t sol, int *sol_len, int depth)
 {
@@ -117,10 +137,33 @@ int main (int argc, char **argv)
     tsp_path_t solution;
     memset (solution, -1, MAX_TOWNS * sizeof (int));
     solution[0] = 0;
+    int err_create;
+    pthread_t threads[nb_threads];
+    int threads_created = 0;
     while (!empty_queue (&q)) {
-        int hops = 0, len = 0;
+	int hops = 0, len = 0;
         get_job (&q, solution, &hops, &len);
-        tsp (hops, len, solution, &cuts, sol, &sol_len);
+	
+	if(threads_created < nb_threads){
+		struct tsp_args args = (struct tsp_args) {hops, len, {(int)solution}, &cuts, {(int)sol}, &sol_len };
+		/*
+struct tsp_args args;
+		args.hops = hops;
+		args.len = len;
+		args.path = &solution;
+		args.cuts = &cuts;
+		args.sol = &sol;
+		args.sol_len = &sol_len;
+		*/
+		err_create = pthread_create(&threads[threads_created++], NULL, 
+					    tsp_thread, (void *)&args);
+		if (err_create){
+			fprintf(stderr, "Erreur lors de la création du thread.\n \
+ pthread_create() a retourné le code : %d\n", err_create);
+			exit(EXIT_FAILURE);
+		}
+	} else
+		tsp (hops, len, solution, &cuts, sol, &sol_len);
     }
     
     clock_gettime (CLOCK_REALTIME, &t2);

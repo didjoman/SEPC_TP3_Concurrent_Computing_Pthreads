@@ -1,0 +1,1 @@
+/usr/bin/cc  -g -Wall -Werror -O3 -std=gnu99    CMakeFiles/ensitsp.dir/src/tsp-genmap.c.o CMakeFiles/ensitsp.dir/src/tsp-job.c.o CMakeFiles/ensitsp.dir/src/tsp-main-para.c.o CMakeFiles/ensitsp.dir/src/tsp-print.c.o CMakeFiles/ensitsp.dir/src/tsp-tsp.c.o  -o ensitsp -rdynamic -lpthread -lm -lrt 

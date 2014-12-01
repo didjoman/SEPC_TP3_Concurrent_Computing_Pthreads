@@ -43,9 +43,9 @@ pthread_mutex_t mutex;
 struct tsp_args{
 	int hops;
 	int len;
-	tsp_path_t path;
+	tsp_path_t* path;
 	long long int *cuts;
-	tsp_path_t sol;
+	tsp_path_t* sol;
 	int *sol_len;
 	pthread_mutex_t m;
 };
@@ -54,7 +54,7 @@ struct tsp_args{
 static void* tsp_thread(void* params)
 {
 	struct tsp_args *args = (struct tsp_args*) params;
-	tsp(args->hops, args->len, args->path, args->cuts, args->sol, args->sol_len, args->m);
+	tsp(args->hops, args->len, *(args->path), args->cuts, *(args->sol), args->sol_len, args->m);
 	pthread_exit(NULL);	
 }
 
@@ -154,7 +154,7 @@ int main (int argc, char **argv)
         get_job (&q, solution, &hops, &len);
 	// (Alex) Ajout de threads ici :
 	if(threads_created < nb_threads){
-		struct tsp_args args = (struct tsp_args) {hops, len, {(int)solution}, &cuts, {(int)sol}, &sol_len, mutex};
+		struct tsp_args args = (struct tsp_args) {hops, len, &solution, &cuts, &sol, &sol_len, mutex};
 		error = pthread_create(&threads[threads_created++], &attr, 
 					    tsp_thread, (void *)&args);
 		if (error){

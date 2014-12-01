@@ -1,4 +1,4 @@
-# Install script for directory: /home/alexandre/documents/cours/2A/SEPC/sepc_tp3
+# Install script for directory: /user/0/.base/laguerrr/home/S3/SEPC/tp3/sepc_tp3
 
 # Set the install prefix
 IF(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -29,7 +29,7 @@ ENDIF(NOT CMAKE_INSTALL_COMPONENT)
 
 # Install shared libraries without execute permission?
 IF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
-  SET(CMAKE_INSTALL_SO_NO_EXE "1")
+  SET(CMAKE_INSTALL_SO_NO_EXE "0")
 ENDIF(NOT DEFINED CMAKE_INSTALL_SO_NO_EXE)
 
 IF(CMAKE_INSTALL_COMPONENT)
@@ -38,7 +38,7 @@ ELSE(CMAKE_INSTALL_COMPONENT)
   SET(CMAKE_INSTALL_MANIFEST "install_manifest.txt")
 ENDIF(CMAKE_INSTALL_COMPONENT)
 
-FILE(WRITE "/home/alexandre/documents/cours/2A/SEPC/sepc_tp3/build/${CMAKE_INSTALL_MANIFEST}" "")
+FILE(WRITE "/user/0/.base/laguerrr/home/S3/SEPC/tp3/sepc_tp3/build/${CMAKE_INSTALL_MANIFEST}" "")
 FOREACH(file ${CMAKE_INSTALL_MANIFEST_FILES})
-  FILE(APPEND "/home/alexandre/documents/cours/2A/SEPC/sepc_tp3/build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
+  FILE(APPEND "/user/0/.base/laguerrr/home/S3/SEPC/tp3/sepc_tp3/build/${CMAKE_INSTALL_MANIFEST}" "${file}\n")
 ENDFOREACH(file)

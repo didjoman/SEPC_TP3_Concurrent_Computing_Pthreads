@@ -8,7 +8,6 @@
 #include <complex.h>
 #include <stdbool.h>
 #include <unistd.h>
-#include <pthread.h>
 
 #include "tsp-types.h"
 #include "tsp-job.h"
@@ -37,26 +36,6 @@ int nb_threads=1;
 /* affichage SVG */
 bool affiche_sol= false;
 
-pthread_mutex_t mutex;
-
-// (Alex) Ajout d'une structure pour passer en parametres les arguments de tsp_thread
-struct tsp_args{
-	int hops;
-	int len;
-	tsp_path_t path;
-	long long int *cuts;
-	tsp_path_t sol;
-	int *sol_len;
-	pthread_mutex_t m;
-};
-
-// (Alex) Thread qui appelle tsp.
-static void* tsp_thread(void* params)
-{
-	struct tsp_args *args = (struct tsp_args*) params;
-	tsp(args->hops, args->len, args->path, args->cuts, args->sol, args->sol_len, args->m);
-	pthread_exit(NULL);	
-}
 
 static void generate_tsp_jobs (struct tsp_queue *q, int hops, int len, tsp_path_t path, long long int *cuts, tsp_path_t sol, int *sol_len, int depth)
 {
@@ -138,47 +117,12 @@ int main (int argc, char **argv)
     tsp_path_t solution;
     memset (solution, -1, MAX_TOWNS * sizeof (int));
     solution[0] = 0;
-    int error;
-    pthread_t threads[nb_threads];
-    int threads_created = 0;
-    pthread_attr_t attr;
-
-    pthread_mutex_init(&mutex, NULL);
-
-    // Init des paramètres du thread : 
-    pthread_attr_init(&attr);
-    pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-    // Execution des jobs
     while (!empty_queue (&q)) {
-	int hops = 0, len = 0;
+        int hops = 0, len = 0;
         get_job (&q, solution, &hops, &len);
-	// (Alex) Ajout de threads ici :
-	if(threads_created < nb_threads){
-		struct tsp_args args = (struct tsp_args) {hops, len, {(int)solution}, &cuts, {(int)sol}, &sol_len, mutex};
-		error = pthread_create(&threads[threads_created++], &attr, 
-					    tsp_thread, (void *)&args);
-		if (error){
-			fprintf(stderr, "Erreur lors de la création du thread.\n \
- pthread_create() a retourné le code : %d\n", error);
-			exit(EXIT_FAILURE);
-		}
-	} else
-		tsp (hops, len, solution, &cuts, sol, &sol_len, mutex);
+        tsp (hops, len, solution, &cuts, sol, &sol_len);
     }
-
-    /* Libère les parametres des threads, et attends pour leur terminaison */
-    pthread_attr_destroy(&attr);
-    int i;
-    for(i=0; i<nb_threads; i++) {
-	    void *status;
-	    error = pthread_join(threads[i], &status);
-	    if (error) {
-		    printf("Erreur lors de l'attente de terminaison d'un thread.\
-                    \npthread_join() a retourné le code %d\n", error);
-		    exit(EXIT_FAILURE);
-	    }
-    }
-
+    
     clock_gettime (CLOCK_REALTIME, &t2);
 
     if (affiche_sol)
@@ -189,7 +133,5 @@ int main (int argc, char **argv)
 	   nb_towns, myseed, sol_len, nb_threads,
 	   perf/1000000ll, perf%1000000ll, cuts);
 
-    pthread_mutex_destroy(&mutex);
-    pthread_exit(NULL);
     return 0 ;
 }

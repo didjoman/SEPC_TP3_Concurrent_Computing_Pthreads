@@ -13,7 +13,7 @@ set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall -Werror -O3 -std=gnu99")
 #########
 # Vous devez editer la ligne suivante pour y mettre vos logins
 #########
-set(LOGINS ruppa laguerrr)
+set(LOGINS login1 login2 login3)
 list(SORT LOGINS)
 
 #####

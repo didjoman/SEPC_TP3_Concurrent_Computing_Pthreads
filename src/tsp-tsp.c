@@ -16,51 +16,51 @@ int minimum;
 /* résolution du problème du voyageur de commerce */
 int present (int city, int hops, tsp_path_t path)
 {
-	for (int i = 0; i < hops; i++) {
-		if (path [i] == city) {
-			return 1;
-		}
-	}
-	
-	return 0 ;
+        for (int i = 0; i < hops; i++) {
+                if (path [i] == city) {
+                        return 1;
+                }
+        }
+
+        return 0 ;
 }
 
 
 
 void tsp (int hops, int len, tsp_path_t path, long long int *cuts, tsp_path_t sol, int *sol_len, pthread_mutex_t m)
 {
-  if (len + cutprefix[(nb_towns-hops)] >= minimum) {
-	  pthread_mutex_lock (&m);
-	  (*cuts)++ ;
-	  pthread_mutex_unlock (&m);
-	  return;
-    }
-    
-    if (hops == nb_towns) {
-	    int me = path [hops - 1];
-	    int dist = distance[me][0]; // retourner en 0
-            if ( len + dist < minimum ) {
-		    pthread_mutex_lock (&m);
-		   
-		    minimum = len + dist;
-		    *sol_len = len + dist;
-		    memcpy(sol, path, nb_towns*sizeof(int));
-		    print_solution (path, len+dist);
+        if (len + cutprefix[(nb_towns-hops)] >= minimum) {
+                pthread_mutex_lock (&m);
+                (*cuts)++ ;
+                pthread_mutex_unlock (&m);
+                return;
+        }
 
-		    pthread_mutex_unlock (&m);
-	    }
-    } else {
-	    int me = path [hops - 1];        
-	    for (int i = 0; i < nb_towns; i++) {
-		    if (!present (i, hops, path)) {
-			    pthread_mutex_lock (&m);
-			    path[hops] = i;
-			    pthread_mutex_unlock (&m);
-			    
-			    int dist = distance[me][i];
-			    tsp (hops + 1, len + dist, path, cuts, sol, sol_len, m);
-		    }
-	    }
-    }
+        if (hops == nb_towns) {
+                int me = path [hops - 1];
+                int dist = distance[me][0]; // retourner en 0
+                pthread_mutex_lock (&m);
+                if ( len + dist < minimum ) {
+
+                        minimum = len + dist;
+                        *sol_len = len + dist;
+                        memcpy(sol, path, nb_towns*sizeof(int));
+                        print_solution (path, len+dist);
+
+                }
+                pthread_mutex_unlock (&m);
+        } else {
+                int me = path [hops - 1];        
+                for (int i = 0; i < nb_towns; i++) {
+                        if (!present (i, hops, path)) {
+                                //pthread_mutex_lock (&m);
+                                path[hops] = i;
+                                //pthread_mutex_unlock (&m);
+
+                                int dist = distance[me][i];
+                                tsp (hops + 1, len + dist, path, cuts, sol, sol_len, m);
+                        }
+                }
+        }
 }
 

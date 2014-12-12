@@ -53,18 +53,8 @@ struct tsp_args{
 static void* tsp_thread(void* params)
 {
 
-        struct tsp_args *args = (struct tsp_args*) params;//malloc(sizeof(struct tsp_args));
-        //(struct tsp_args*) params;
-        /* struct tsp_args *tmp = (struct tsp_args*) params;
-           args->hops = tmp->hops;
-           args->len = tmp->len;
-           args->path = tmp->path;
-           args->cuts = tmp->cuts;
-           args->sol = tmp->sol;
-           args->sol_len = tmp->sol_len;
-           args->q = tmp->q;*/
+        struct tsp_args *args = (struct tsp_args*) params;
         while (!empty_queue (args->q)) {
-                //getjob
                 get_job (args->q, *(args->path), &args->hops, &args->len);
                 tsp(args->hops, args->len, *(args->path), args->cuts, *(args->sol), args->sol_len);
         }
@@ -182,10 +172,9 @@ int main (int argc, char **argv)
                 if(threads_created < nb_threads){
                         cpt++;
 
-                        //struct tsp_args args;
                         tab_args[cpt].hops = hops;
                         tab_args[cpt].len = len;
-                        //memcpy(tab_sol[cpt], solution, MAX_TOWNS * sizeof (int));
+
                         memset (tab_sol[cpt], -1, MAX_TOWNS * sizeof (int));
                         tab_sol[cpt][0] = 0;
                         tab_args[cpt].path = &tab_sol[cpt];
@@ -201,7 +190,6 @@ int main (int argc, char **argv)
                                 exit(EXIT_FAILURE);;
                         }
                 } else {
-                        //         fprintf(stderr, "Je suis dans le else, %d\n", cpt++);
                         get_job (&q, solution, &hops, &len);
                         tsp (hops, len, solution, &cuts, sol, &sol_len);
                 }

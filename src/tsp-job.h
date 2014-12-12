@@ -1,5 +1,6 @@
 #ifndef _TSP_JOB_H
 #define _TSP_JOB_H
+#include <pthread.h>
 /* gestion des files de jobs */
 
 /* Structure pour la tête de file */

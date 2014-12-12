@@ -37,9 +37,8 @@ int nb_threads=1;
 /* affichage SVG */
 bool affiche_sol= false;
 
-pthread_mutex_t mutex, mutex1;
 
-// (Alex) Ajout d'une structure pour passer en parametres les arguments de tsp_thread
+// Ajout d'une structure pour passer en parametres les arguments de tsp_thread
 struct tsp_args{
         int hops;
         int len;
@@ -47,22 +46,28 @@ struct tsp_args{
         long long int *cuts;
         tsp_path_t* sol;
         int *sol_len;
-        pthread_mutex_t m;
+        struct tsp_queue *q;
 };
 
-// (Alex) Thread qui appelle tsp.
+// Thread qui appelle tsp.
 static void* tsp_thread(void* params)
 {
-        struct tsp_args *args = malloc(sizeof(struct tsp_args));
-        struct tsp_args *tmp = (struct tsp_args*) params;
-        args->hops = tmp->hops;
-        args->len = tmp->len;
-        args->path = tmp->path;
-        args->cuts = tmp->cuts;
-        args->sol = tmp->sol;
-        args->sol_len = tmp->sol_len;
-        args->m = tmp->m;
-        tsp(args->hops, args->len, *(args->path), args->cuts, *(args->sol), args->sol_len, args->m);
+
+        struct tsp_args *args = (struct tsp_args*) params;//malloc(sizeof(struct tsp_args));
+        //(struct tsp_args*) params;
+        /* struct tsp_args *tmp = (struct tsp_args*) params;
+           args->hops = tmp->hops;
+           args->len = tmp->len;
+           args->path = tmp->path;
+           args->cuts = tmp->cuts;
+           args->sol = tmp->sol;
+           args->sol_len = tmp->sol_len;
+           args->q = tmp->q;*/
+        while (!empty_queue (args->q)) {
+                //getjob
+                get_job (args->q, *(args->path), &args->hops, &args->len);
+                tsp(args->hops, args->len, *(args->path), args->cuts, *(args->sol), args->sol_len);
+        }
         pthread_exit(NULL);	
 }
 
@@ -150,47 +155,44 @@ int main (int argc, char **argv)
         pthread_t threads[nb_threads];
         int threads_created = 0;
         pthread_attr_t attr;
-        //int cpt = 0;
-        pthread_mutex_init(&mutex, NULL);
+        //Initialisation des mutex
+        pthread_mutex_init(&m_sol, NULL);
+        pthread_mutex_init(&m_cut, NULL);
+        pthread_mutex_init(&m_min, NULL);
+        pthread_mutex_init(&m_get_job, NULL);
 
         // Init des paramètres du thread : 
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
 
-        //Creation d'un mutex pour lancer un thread
-        pthread_mutex_init(&mutex1, NULL);
-        
-
-
         //Tableau de solution
         tsp_path_t tab_sol[nb_threads];
+
         int cpt = -1;
 
         //Tableau d'arguments
         struct tsp_args tab_args[nb_threads];
-        
+
 
         // Execution des jobs
         while (!empty_queue (&q)) {
                 int hops = 0, len = 0;
-                get_job (&q, solution, &hops, &len);
 
-                // (Alex) Ajout de threads ici :
+                // Ajout de threads ici :
                 if(threads_created < nb_threads){
-                        //pthread_mutex_lock (&mutex);
                         cpt++;
-                        //pthread_mutex_unlock (&mutex);
-                        memcpy(tab_sol[cpt], solution, MAX_TOWNS * sizeof (int));
-                        //tab_sol[cpt][0] = 0;
 
                         //struct tsp_args args;
                         tab_args[cpt].hops = hops;
                         tab_args[cpt].len = len;
+                        //memcpy(tab_sol[cpt], solution, MAX_TOWNS * sizeof (int));
+                        memset (tab_sol[cpt], -1, MAX_TOWNS * sizeof (int));
+                        tab_sol[cpt][0] = 0;
                         tab_args[cpt].path = &tab_sol[cpt];
                         tab_args[cpt].cuts = &cuts;
                         tab_args[cpt].sol = &sol;
                         tab_args[cpt].sol_len = &sol_len;
-                        tab_args[cpt].m = mutex;
+                        tab_args[cpt].q = &q;
                         error = pthread_create(&threads[threads_created++], &attr, 
                                         tsp_thread, (void *)&tab_args[cpt]);
                         if (error){
@@ -198,9 +200,11 @@ int main (int argc, char **argv)
                                                 pthread_create() a retourné le code : %d\n", error);
                                 exit(EXIT_FAILURE);;
                         }
-                } else
+                } else {
                         //         fprintf(stderr, "Je suis dans le else, %d\n", cpt++);
-                        tsp (hops, len, solution, &cuts, sol, &sol_len, mutex);
+                        get_job (&q, solution, &hops, &len);
+                        tsp (hops, len, solution, &cuts, sol, &sol_len);
+                }
         }
 
         /* Libère les parametres des threads, et attends pour leur terminaison */
@@ -226,8 +230,10 @@ int main (int argc, char **argv)
                         nb_towns, myseed, sol_len, nb_threads,
                         perf/1000000ll, perf%1000000ll, cuts);
 
-        pthread_mutex_destroy(&mutex);
-        pthread_mutex_destroy(&mutex1);
+        pthread_mutex_destroy(&m_sol);
+        pthread_mutex_destroy(&m_cut);
+        pthread_mutex_destroy(&m_min);
+        pthread_mutex_destroy(&m_get_job);
         pthread_exit(NULL);
         return 0 ;
 }
